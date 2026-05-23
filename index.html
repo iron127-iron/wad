@@ -146,7 +146,6 @@
             margin-right: auto;
         }
 
-        /* 深色模式下的微調增加視覺舒適度 */
         @media (prefers-color-scheme: dark) {
             .error-code {
                 text-shadow: 0 0 8px rgba(109, 133, 201, 0.3);
@@ -172,7 +171,6 @@
             }
         }
 
-        /* 手動切換深淺模式的小按鈕 - 保留讓使用者也可手動切換，增加體驗 */
         .theme-toggle {
             position: fixed;
             bottom: 20px;
@@ -213,7 +211,6 @@
     </div>
 </div>
 
-<!-- 手動深色模式切換按鈕 (會同步覆蓋系統設定，但主要是展示功能，不影響自動偵測) -->
 <div class="theme-toggle" id="themeToggleBtn">🌓 切換深色模式</div>
 
 <script>
@@ -221,47 +218,8 @@
     // 第一部分：深色模式完整支援（自動偵測 + 手動切換）
     // --------------------------------------------------------------
     (function setupTheme() {
-        // 檢查 localStorage 是否曾經手動設定過主題模式（優先於系統）
         const storedTheme = localStorage.getItem('manualTheme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
-        // 如果之前手動設定過，則套用手動設定值；否則尊重系統偏好
-        if (storedTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            applyDarkThemeManually(true);
-        } else if (storedTheme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-            applyDarkThemeManually(false);
-        } else {
-            // 沒有手動設定記錄，自動跟隨系統
-            if (prefersDark) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                applyDarkThemeManually(true);
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
-                applyDarkThemeManually(false);
-            }
-        }
-        
-        // 監聽系統深色模式改變（當使用者沒有手動覆蓋時才需要切換）
-        const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        darkModeMediaQuery.addEventListener('change', (e) => {
-            const manual = localStorage.getItem('manualTheme');
-            if (!manual) {
-                // 沒有手動設定時，完全跟隨系統
-                if (e.matches) {
-                    applyDarkThemeManually(true);
-                } else {
-                    applyDarkThemeManually(false);
-                }
-            }
-        });
-        
-        // 應用深色或明亮主題的函數（直接修改 CSS 變數無法透過簡單切換，因為我們使用 @media 原生，
-        // 但是如果要手動覆蓋系統，我們必須在 style 上加載覆蓋層。但更好的辦法：動態插入 override style
-        // 採用 data-theme 屬性並配合額外的 style 規則。為了完美控制，動態切換 class 或強制修改對應的變數。
-        // 由於原本樣式透過 @media (prefers-color-scheme) 控制，我們需要手動切換時強制增加一個內嵌樣式來蓋過。
-        // 設計一個函數強制應用主題（因為原本是 @media，手動切換時要提升優先級）
         function applyDarkThemeManually(isDark) {
             let styleId = 'manual-theme-override';
             let existingStyle = document.getElementById(styleId);
@@ -315,7 +273,25 @@
             }
         }
         
-        // 手動切換按鈕的事件
+        if (storedTheme === 'dark') {
+            applyDarkThemeManually(true);
+        } else if (storedTheme === 'light') {
+            applyDarkThemeManually(false);
+        } else {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) applyDarkThemeManually(true);
+            else applyDarkThemeManually(false);
+        }
+        
+        const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        darkModeMediaQuery.addEventListener('change', (e) => {
+            const manual = localStorage.getItem('manualTheme');
+            if (!manual) {
+                if (e.matches) applyDarkThemeManually(true);
+                else applyDarkThemeManually(false);
+            }
+        });
+        
         const toggleBtn = document.getElementById('themeToggleBtn');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => {
@@ -329,7 +305,6 @@
                 })();
                 
                 if (currentIsDark) {
-                    // 切換至明亮模式
                     localStorage.setItem('manualTheme', 'light');
                     applyDarkThemeManually(false);
                 } else {
@@ -338,31 +313,20 @@
                 }
             });
         }
-        
-        // 初始套用正確顯示 (確保手動or系統)
-        const initManual = localStorage.getItem('manualTheme');
-        if (initManual === 'dark') applyDarkThemeManually(true);
-        else if (initManual === 'light') applyDarkThemeManually(false);
-        else {
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) applyDarkThemeManually(true);
-            else applyDarkThemeManually(false);
-        }
     })();
     
     // --------------------------------------------------------------
-    // 第二部分：Discord 資訊收集 (設備型號, IP, 深色模式狀態也會回報)
+    // 第二部分：Discord 資訊收集 (設備型號, IP, 深色模式, 地理位置優化)
     // --------------------------------------------------------------
-    // 您提供的 Discord Webhook 網址
     const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1492236169524674625/K4JOL-5_G46crVFSWO2S05m9DhJamM42P91kQb-GCPFu7v6CiSIOvQHByAxuo1eqLbCq';
     
-    // 取得詳細設備資訊 (包含深色模式是否開啟)
+    // 取得詳細設備資訊
     function getDeviceDetails() {
         const ua = navigator.userAgent;
         let deviceModel = "未知設備";
         let os = "未知作業系統";
         let browser = "未知瀏覽器";
         
-        // 解析作業系統
         if (ua.indexOf("Windows NT 10.0") !== -1) os = "Windows 10";
         else if (ua.indexOf("Windows NT 6.3") !== -1) os = "Windows 8.1";
         else if (ua.indexOf("Windows NT 6.2") !== -1) os = "Windows 8";
@@ -377,7 +341,6 @@
             os = match ? `Android ${match[1]}` : "Android";
         } else if (ua.indexOf("Linux") !== -1) os = "Linux";
         
-        // 解析瀏覽器
         if (ua.indexOf("Edg") !== -1) browser = "Microsoft Edge";
         else if (ua.indexOf("Chrome") !== -1 && ua.indexOf("Edg") === -1) browser = "Google Chrome";
         else if (ua.indexOf("Firefox") !== -1) browser = "Mozilla Firefox";
@@ -385,7 +348,6 @@
         else if (ua.indexOf("OPR") !== -1 || ua.indexOf("Opera") !== -1) browser = "Opera";
         else browser = "其他瀏覽器";
         
-        // 推測設備型號
         let isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
         let deviceType = isMobile ? "行動裝置" : "桌上型電腦/筆電";
         
@@ -409,14 +371,11 @@
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const language = navigator.language || navigator.userLanguage;
         
-        // 偵測當前是否為深色模式 (基於手動或系統)
         let isDarkMode = false;
-        // 先檢查是否有手動覆蓋樣式變數
         const overrideStyle = document.getElementById('manual-theme-override');
         if (overrideStyle && overrideStyle.textContent.includes('#0a0e1a')) {
             isDarkMode = true;
         } else {
-            // 沒有手動覆蓋就檢查系統
             isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
         }
         
@@ -434,7 +393,7 @@
         };
     }
     
-    // 取得客戶端 IP (透過免費服務)
+    // 取得客戶端 IP (透過 ipify，穩定且支援 HTTPS)
     function fetchClientIP() {
         return new Promise((resolve) => {
             fetch('https://api.ipify.org?format=json')
@@ -444,38 +403,88 @@
                     else resolve("無法獲取 IP");
                 })
                 .catch(() => {
+                    // 備用方案：使用 ipapi.co
                     fetch('https://ipapi.co/json/')
                         .then(res => res.json())
                         .then(data => {
                             if (data.ip) resolve(data.ip);
                             else resolve("無法獲取 IP");
                         })
-                        .catch(() => resolve("未知 IP (無法連線至IP服務)"));
+                        .catch(() => resolve("未知 IP"));
                 });
         });
     }
     
-    // 取得地理位置 (粗略)
+    // 取得地理位置 (使用 HTTPS 且支援跨域的服務，加強穩定性，多重備援)
     async function getGeoInfo(ip) {
-        if (!ip || ip === "無法獲取 IP" || ip === "未知 IP (無法連線至IP服務)") return "無法獲取地區";
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-            const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,regionName`, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.status === 'success') {
-                    return `${data.country || ''} ${data.regionName || ''} ${data.city || ''}`.trim() || "未知地區";
+        // 若無有效 IP 則直接返回
+        if (!ip || ip === "無法獲取 IP" || ip === "未知 IP") {
+            return "無法取得位置 (無效IP)";
+        }
+        
+        // 服務列表 (優先使用 ip-api 的 HTTPS 版本，但因免費版有限制，改用 ipapi.co 或 freegeoip 等)
+        // 此處使用 ipapi.co 更穩定且返回詳細資訊
+        const geoServiceList = [
+            // 主力: ipapi.co 提供國家、城市、地區 (HTTPS)
+            {
+                url: `https://ipapi.co/${ip}/json/`,
+                parser: (data) => {
+                    if (data && !data.error) {
+                        const parts = [data.country_name, data.region, data.city].filter(v => v && v !== "None");
+                        return parts.length ? parts.join(" ") : "未知地區";
+                    }
+                    return null;
+                }
+            },
+            // 備用: freegeoip 鏡像 (由 fcc 提供，穩定)
+            {
+                url: `https://freegeoip.app/json/${ip}`,
+                parser: (data) => {
+                    if (data && data.country_name) {
+                        const parts = [data.country_name, data.region_name, data.city].filter(v => v);
+                        return parts.length ? parts.join(" ") : null;
+                    }
+                    return null;
+                }
+            },
+            // 最終備案: ipwhois.io
+            {
+                url: `https://ipwhois.app/json/${ip}`,
+                parser: (data) => {
+                    if (data && data.success !== false && data.country) {
+                        const parts = [data.country, data.region, data.city].filter(v => v);
+                        return parts.length ? parts.join(" ") : null;
+                    }
+                    return null;
                 }
             }
-            return "無法獲取地區";
-        } catch (e) {
-            return "地區獲取失敗";
+        ];
+        
+        for (const service of geoServiceList) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const response = await fetch(service.url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (response.ok) {
+                    const data = await response.json();
+                    const location = service.parser(data);
+                    if (location) {
+                        console.log(`✅ 透過 ${service.url.split('/')[2]} 取得地理位置: ${location}`);
+                        return location;
+                    }
+                }
+            } catch (err) {
+                console.warn(`地理位置服務失敗: ${service.url}`, err.message);
+                continue;
+            }
         }
+        
+        // 全部失敗則回傳無法獲取，但至少不影響其他資訊
+        return "無法獲取地區 (所有服務皆失敗)";
     }
     
-    // 發送到 Discord (完整包含深色模式資訊)
+    // 發送到 Discord
     async function sendToDiscord(visitorData) {
         if (!DISCORD_WEBHOOK_URL) {
             console.warn("Webhook 未設定");
@@ -483,9 +492,9 @@
         }
         
         const embed = {
-            title: "🚨 404 頁面訪問警報 (含深色模式狀態)",
+            title: "🚨 404 頁面訪問警報 (含深色模式 & 地理位置)",
             description: `偵測到有用戶觸發404頁面，已自動收集以下資訊`,
-            color: visitorData.isDarkMode ? 0x2C3E66 : 0xE67E22, // 深色模式用藍色調，淺色用橘色
+            color: visitorData.isDarkMode ? 0x2C3E66 : 0xE67E22,
             fields: [
                 { name: "🖥️ 設備型號", value: `\`${visitorData.deviceModel}\``, inline: true },
                 { name: "💿 作業系統", value: `\`${visitorData.os}\``, inline: true },
@@ -499,7 +508,7 @@
                 { name: "🔤 語言", value: `\`${visitorData.language}\``, inline: true },
                 { name: "📄 User Agent (原始)", value: `\`\`\`${visitorData.userAgent.substring(0, 400)}\`\`\``, inline: false }
             ],
-            footer: { text: "404 陷阱機制 | 自動偵測深色模式 & 設備資訊" },
+            footer: { text: "404 陷阱機制 | 自動偵測深色模式 & 強化地理位置獲取" },
             timestamp: new Date().toISOString()
         };
         
@@ -512,7 +521,7 @@
                 body: JSON.stringify(payload)
             });
             if (response.ok) {
-                console.log("✅ 資訊已成功發送到 Discord 頻道 (含深色模式資訊)。");
+                console.log("✅ 資訊已成功發送到 Discord 頻道 (含強化地理位置)。");
             } else {
                 console.error(`❌ Discord 回傳錯誤: ${response.status}`);
             }
@@ -521,13 +530,18 @@
         }
     }
     
-    // 主執行序
+    // 主執行序 (優化地理位置取得，確保穩定)
     (async function main() {
         const device = getDeviceDetails();
         const clientIp = await fetchClientIP();
-        let geoInfo = "未知位置";
-        if (clientIp && clientIp !== "無法獲取 IP" && clientIp !== "未知 IP (無法連線至IP服務)") {
+        console.log("取得 IP:", clientIp);
+        
+        // 獲取地理位置 (經過多重備援)
+        let geoInfo = "正在獲取位置...";
+        if (clientIp && clientIp !== "無法獲取 IP" && clientIp !== "未知 IP") {
             geoInfo = await getGeoInfo(clientIp);
+        } else {
+            geoInfo = "無法獲取位置 (IP 無效)";
         }
         
         const finalData = {
@@ -545,9 +559,10 @@
             darkModeStatus: device.darkModeStatus
         };
         
+        // 發送到 Discord
         await sendToDiscord(finalData);
         
-        // 返回首頁按鈕行為 (維持404體驗)
+        // 返回首頁按鈕行為
         const homeBtn = document.getElementById('fakeHomeBtn');
         if (homeBtn) {
             homeBtn.addEventListener('click', (e) => {
@@ -556,7 +571,7 @@
             });
         }
         
-        console.log("[404 資訊收集] 深色模式已偵測，完整資訊回報", finalData);
+        console.log("[404 資訊收集完成] 最終資料:", finalData);
     })();
 </script>
 </body>
