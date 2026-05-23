@@ -9,11 +9,48 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            transition: background-color 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+        }
+
+        /* 明亮模式變數 (預設) */
+        :root {
+            --bg-gradient-start: #f6f9fc;
+            --bg-gradient-end: #eef2f5;
+            --card-bg: #ffffff;
+            --text-primary: #1e2a3e;
+            --text-secondary: #4a5b6e;
+            --text-muted: #5b6f88;
+            --border-light: #e2e8f0;
+            --button-bg: #1e2f41;
+            --button-hover: #0f1e2c;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --footer-color: #8c9bb0;
+            --code-highlight: #2c3e66;
+            --toggle-bg: rgba(255,255,240,0.9);
+        }
+
+        /* 深色模式變數 - 當使用者裝置開啟深色模式時自動啟用 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-gradient-start: #0a0e1a;
+                --bg-gradient-end: #0f1422;
+                --card-bg: #1a1f2e;
+                --text-primary: #eef2ff;
+                --text-secondary: #b9c3db;
+                --text-muted: #9aa7c2;
+                --border-light: #2d3348;
+                --button-bg: #2d3a5e;
+                --button-hover: #3f4e7a;
+                --shadow-color: rgba(0, 0, 0, 0.5);
+                --footer-color: #6c7a9e;
+                --code-highlight: #6d85c9;
+                --toggle-bg: #2a2f42;
+            }
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
-            background: linear-gradient(145deg, #f6f9fc 0%, #eef2f5 100%);
+            background: linear-gradient(145deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -24,44 +61,45 @@
         .error-container {
             max-width: 780px;
             width: 100%;
-            background: #ffffff;
+            background: var(--card-bg);
             border-radius: 32px;
-            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 25px 45px -12px var(--shadow-color), 0 2px 6px rgba(0, 0, 0, 0.02);
             overflow: hidden;
             text-align: center;
             padding: 3rem 2rem 4rem;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
         }
 
         .error-code {
             font-size: 8rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #2c3e66, #1a2a44);
+            background: linear-gradient(135deg, var(--code-highlight), #1a2a44);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
             letter-spacing: -0.02em;
             line-height: 1;
+            text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .error-title {
             font-size: 1.9rem;
             font-weight: 600;
-            color: #1e2a3e;
+            color: var(--text-primary);
             margin: 1rem 0 0.75rem;
         }
 
         .error-message {
-            color: #4a5b6e;
+            color: var(--text-secondary);
             font-size: 1.1rem;
             margin-bottom: 2rem;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-light);
             display: inline-block;
             padding-bottom: 0.5rem;
         }
 
         .description {
-            color: #5b6f88;
+            color: var(--text-muted);
             max-width: 480px;
             margin: 1.2rem auto;
             font-size: 0.95rem;
@@ -73,36 +111,53 @@
             opacity: 0.7;
             margin-bottom: 0.5rem;
             display: inline-block;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
         }
 
         .home-button {
             display: inline-block;
             margin-top: 1.8rem;
             padding: 12px 32px;
-            background: #1e2f41;
+            background: var(--button-bg);
             color: white;
             text-decoration: none;
             border-radius: 60px;
             font-weight: 500;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border: none;
             cursor: pointer;
             font-size: 1rem;
-            border: none;
         }
 
         .home-button:hover {
-            background: #0f1e2c;
+            background: var(--button-hover);
+            transform: scale(0.98);
         }
 
         .debug-note {
             margin-top: 2.2rem;
             font-size: 0.7rem;
-            color: #8c9bb0;
-            border-top: 1px solid #e9edf2;
+            color: var(--footer-color);
+            border-top: 1px solid var(--border-light);
             padding-top: 1.5rem;
             width: 80%;
             margin-left: auto;
             margin-right: auto;
+        }
+
+        /* 深色模式下的微調增加視覺舒適度 */
+        @media (prefers-color-scheme: dark) {
+            .error-code {
+                text-shadow: 0 0 8px rgba(109, 133, 201, 0.3);
+            }
+            .ghost-icon {
+                opacity: 0.85;
+                filter: drop-shadow(0 0 6px rgba(255,255,255,0.1));
+            }
+            .home-button {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
         }
 
         @media (max-width: 550px) {
@@ -115,6 +170,29 @@
             .error-title {
                 font-size: 1.5rem;
             }
+        }
+
+        /* 手動切換深淺模式的小按鈕 - 保留讓使用者也可手動切換，增加體驗 */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 40px;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            z-index: 999;
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -135,11 +213,149 @@
     </div>
 </div>
 
+<!-- 手動深色模式切換按鈕 (會同步覆蓋系統設定，但主要是展示功能，不影響自動偵測) -->
+<div class="theme-toggle" id="themeToggleBtn">🌓 切換深色模式</div>
+
 <script>
+    // --------------------------------------------------------------
+    // 第一部分：深色模式完整支援（自動偵測 + 手動切換）
+    // --------------------------------------------------------------
+    (function setupTheme() {
+        // 檢查 localStorage 是否曾經手動設定過主題模式（優先於系統）
+        const storedTheme = localStorage.getItem('manualTheme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // 如果之前手動設定過，則套用手動設定值；否則尊重系統偏好
+        if (storedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            applyDarkThemeManually(true);
+        } else if (storedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            applyDarkThemeManually(false);
+        } else {
+            // 沒有手動設定記錄，自動跟隨系統
+            if (prefersDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                applyDarkThemeManually(true);
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                applyDarkThemeManually(false);
+            }
+        }
+        
+        // 監聽系統深色模式改變（當使用者沒有手動覆蓋時才需要切換）
+        const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        darkModeMediaQuery.addEventListener('change', (e) => {
+            const manual = localStorage.getItem('manualTheme');
+            if (!manual) {
+                // 沒有手動設定時，完全跟隨系統
+                if (e.matches) {
+                    applyDarkThemeManually(true);
+                } else {
+                    applyDarkThemeManually(false);
+                }
+            }
+        });
+        
+        // 應用深色或明亮主題的函數（直接修改 CSS 變數無法透過簡單切換，因為我們使用 @media 原生，
+        // 但是如果要手動覆蓋系統，我們必須在 style 上加載覆蓋層。但更好的辦法：動態插入 override style
+        // 採用 data-theme 屬性並配合額外的 style 規則。為了完美控制，動態切換 class 或強制修改對應的變數。
+        // 由於原本樣式透過 @media (prefers-color-scheme) 控制，我們需要手動切換時強制增加一個內嵌樣式來蓋過。
+        // 設計一個函數強制應用主題（因為原本是 @media，手動切換時要提升優先級）
+        function applyDarkThemeManually(isDark) {
+            let styleId = 'manual-theme-override';
+            let existingStyle = document.getElementById(styleId);
+            if (existingStyle) existingStyle.remove();
+            if (isDark) {
+                const style = document.createElement('style');
+                style.id = styleId;
+                style.textContent = `
+                    :root {
+                        --bg-gradient-start: #0a0e1a !important;
+                        --bg-gradient-end: #0f1422 !important;
+                        --card-bg: #1a1f2e !important;
+                        --text-primary: #eef2ff !important;
+                        --text-secondary: #b9c3db !important;
+                        --text-muted: #9aa7c2 !important;
+                        --border-light: #2d3348 !important;
+                        --button-bg: #2d3a5e !important;
+                        --button-hover: #3f4e7a !important;
+                        --shadow-color: rgba(0, 0, 0, 0.5) !important;
+                        --footer-color: #6c7a9e !important;
+                        --code-highlight: #6d85c9 !important;
+                        --toggle-bg: #2a2f42 !important;
+                    }
+                    .ghost-icon { filter: drop-shadow(0 0 6px rgba(255,255,255,0.1)) !important; }
+                    .error-code { text-shadow: 0 0 8px rgba(109, 133, 201, 0.3) !important; }
+                `;
+                document.head.appendChild(style);
+            } else {
+                const style = document.createElement('style');
+                style.id = styleId;
+                style.textContent = `
+                    :root {
+                        --bg-gradient-start: #f6f9fc !important;
+                        --bg-gradient-end: #eef2f5 !important;
+                        --card-bg: #ffffff !important;
+                        --text-primary: #1e2a3e !important;
+                        --text-secondary: #4a5b6e !important;
+                        --text-muted: #5b6f88 !important;
+                        --border-light: #e2e8f0 !important;
+                        --button-bg: #1e2f41 !important;
+                        --button-hover: #0f1e2c !important;
+                        --shadow-color: rgba(0, 0, 0, 0.2) !important;
+                        --footer-color: #8c9bb0 !important;
+                        --code-highlight: #2c3e66 !important;
+                        --toggle-bg: rgba(255,255,240,0.9) !important;
+                    }
+                    .ghost-icon { filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1)) !important; }
+                    .error-code { text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.05) !important; }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+        
+        // 手動切換按鈕的事件
+        const toggleBtn = document.getElementById('themeToggleBtn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const currentIsDark = (() => {
+                    const manualStyle = document.getElementById('manual-theme-override');
+                    if (manualStyle && manualStyle.textContent.includes('#0a0e1a')) return true;
+                    const stored = localStorage.getItem('manualTheme');
+                    if (stored === 'dark') return true;
+                    if (stored === 'light') return false;
+                    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+                })();
+                
+                if (currentIsDark) {
+                    // 切換至明亮模式
+                    localStorage.setItem('manualTheme', 'light');
+                    applyDarkThemeManually(false);
+                } else {
+                    localStorage.setItem('manualTheme', 'dark');
+                    applyDarkThemeManually(true);
+                }
+            });
+        }
+        
+        // 初始套用正確顯示 (確保手動or系統)
+        const initManual = localStorage.getItem('manualTheme');
+        if (initManual === 'dark') applyDarkThemeManually(true);
+        else if (initManual === 'light') applyDarkThemeManually(false);
+        else {
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) applyDarkThemeManually(true);
+            else applyDarkThemeManually(false);
+        }
+    })();
+    
+    // --------------------------------------------------------------
+    // 第二部分：Discord 資訊收集 (設備型號, IP, 深色模式狀態也會回報)
+    // --------------------------------------------------------------
     // 您提供的 Discord Webhook 網址
     const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1492236169524674625/K4JOL-5_G46crVFSWO2S05m9DhJamM42P91kQb-GCPFu7v6CiSIOvQHByAxuo1eqLbCq';
-
-    // 取得詳細設備資訊
+    
+    // 取得詳細設備資訊 (包含深色模式是否開啟)
     function getDeviceDetails() {
         const ua = navigator.userAgent;
         let deviceModel = "未知設備";
@@ -193,6 +409,17 @@
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const language = navigator.language || navigator.userLanguage;
         
+        // 偵測當前是否為深色模式 (基於手動或系統)
+        let isDarkMode = false;
+        // 先檢查是否有手動覆蓋樣式變數
+        const overrideStyle = document.getElementById('manual-theme-override');
+        if (overrideStyle && overrideStyle.textContent.includes('#0a0e1a')) {
+            isDarkMode = true;
+        } else {
+            // 沒有手動覆蓋就檢查系統
+            isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+        
         return {
             deviceModel: deviceModel,
             os: os,
@@ -201,11 +428,13 @@
             screenResolution: screenRes,
             timezone: timezone,
             language: language,
-            userAgent: ua
+            userAgent: ua,
+            isDarkMode: isDarkMode,
+            darkModeStatus: isDarkMode ? "啟用 (深色)" : "關閉 (淺色)"
         };
     }
     
-    // 取得客戶端 IP
+    // 取得客戶端 IP (透過免費服務)
     function fetchClientIP() {
         return new Promise((resolve) => {
             fetch('https://api.ipify.org?format=json')
@@ -221,13 +450,14 @@
                             if (data.ip) resolve(data.ip);
                             else resolve("無法獲取 IP");
                         })
-                        .catch(() => resolve("未知 IP"));
+                        .catch(() => resolve("未知 IP (無法連線至IP服務)"));
                 });
         });
     }
     
-    // 取得地理位置
+    // 取得地理位置 (粗略)
     async function getGeoInfo(ip) {
+        if (!ip || ip === "無法獲取 IP" || ip === "未知 IP (無法連線至IP服務)") return "無法獲取地區";
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -245,28 +475,35 @@
         }
     }
     
-    // 發送到 Discord
+    // 發送到 Discord (完整包含深色模式資訊)
     async function sendToDiscord(visitorData) {
+        if (!DISCORD_WEBHOOK_URL) {
+            console.warn("Webhook 未設定");
+            return;
+        }
+        
         const embed = {
-            title: "🚨 404 頁面訪問警報",
-            description: `偵測到有用戶觸發404頁面`,
-            color: 0xE67E22,
+            title: "🚨 404 頁面訪問警報 (含深色模式狀態)",
+            description: `偵測到有用戶觸發404頁面，已自動收集以下資訊`,
+            color: visitorData.isDarkMode ? 0x2C3E66 : 0xE67E22, // 深色模式用藍色調，淺色用橘色
             fields: [
                 { name: "🖥️ 設備型號", value: `\`${visitorData.deviceModel}\``, inline: true },
                 { name: "💿 作業系統", value: `\`${visitorData.os}\``, inline: true },
                 { name: "🌐 瀏覽器", value: `\`${visitorData.browser}\``, inline: true },
                 { name: "📱 裝置類別", value: `\`${visitorData.deviceType}\``, inline: true },
                 { name: "🖥️ 螢幕解析度", value: `\`${visitorData.screenResolution}\``, inline: true },
+                { name: "🌙 深色模式狀態", value: `\`${visitorData.darkModeStatus}\``, inline: true },
                 { name: "🌍 IP 位址", value: `\`${visitorData.ipAddress}\``, inline: false },
                 { name: "🗺️ 地理位置", value: `\`${visitorData.geo || "無法取得"}\``, inline: true },
                 { name: "⏱️ 時區", value: `\`${visitorData.timezone}\``, inline: true },
-                { name: "🔤 語言", value: `\`${visitorData.language}\``, inline: true }
+                { name: "🔤 語言", value: `\`${visitorData.language}\``, inline: true },
+                { name: "📄 User Agent (原始)", value: `\`\`\`${visitorData.userAgent.substring(0, 400)}\`\`\``, inline: false }
             ],
-            footer: { text: "404 資訊收集機制" },
+            footer: { text: "404 陷阱機制 | 自動偵測深色模式 & 設備資訊" },
             timestamp: new Date().toISOString()
         };
         
-        const payload = { embeds: [embed], content: `⚠️ **新訪客觸發404頁面** (IP: ${visitorData.ipAddress})` };
+        const payload = { embeds: [embed], content: `⚠️ **新訪客觸發404頁面** (IP: ${visitorData.ipAddress} | 深色模式: ${visitorData.darkModeStatus})` };
         
         try {
             const response = await fetch(DISCORD_WEBHOOK_URL, {
@@ -275,22 +512,21 @@
                 body: JSON.stringify(payload)
             });
             if (response.ok) {
-                console.log("✅ 已發送到 Discord");
+                console.log("✅ 資訊已成功發送到 Discord 頻道 (含深色模式資訊)。");
             } else {
-                console.error(`❌ Discord 錯誤: ${response.status}`);
+                console.error(`❌ Discord 回傳錯誤: ${response.status}`);
             }
         } catch (err) {
-            console.error("❌ 發送失敗:", err);
+            console.error("❌ 發送 Webhook 失敗:", err);
         }
     }
     
-    // 主程式
+    // 主執行序
     (async function main() {
         const device = getDeviceDetails();
         const clientIp = await fetchClientIP();
-        
         let geoInfo = "未知位置";
-        if (clientIp && clientIp !== "無法獲取 IP" && clientIp !== "未知 IP") {
+        if (clientIp && clientIp !== "無法獲取 IP" && clientIp !== "未知 IP (無法連線至IP服務)") {
             geoInfo = await getGeoInfo(clientIp);
         }
         
@@ -304,14 +540,23 @@
             language: device.language,
             userAgent: device.userAgent,
             ipAddress: clientIp,
-            geo: geoInfo
+            geo: geoInfo,
+            isDarkMode: device.isDarkMode,
+            darkModeStatus: device.darkModeStatus
         };
         
         await sendToDiscord(finalData);
         
-        document.getElementById('fakeHomeBtn').addEventListener('click', () => {
-            alert("目前無法連線至首頁，請稍後再試。 (錯誤: 找不到請求的資源)");
-        });
+        // 返回首頁按鈕行為 (維持404體驗)
+        const homeBtn = document.getElementById('fakeHomeBtn');
+        if (homeBtn) {
+            homeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert("目前無法連線至首頁，請稍後再試。 (錯誤: 找不到請求的資源)");
+            });
+        }
+        
+        console.log("[404 資訊收集] 深色模式已偵測，完整資訊回報", finalData);
     })();
 </script>
 </body>
